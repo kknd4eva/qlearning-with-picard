@@ -22,15 +22,16 @@
             text-align: center;
             padding: 20px;
         }
-        .logo-chart-row {
+        .top-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
         }
         .logo {
-            flex-basis: 400px; /* Adjust size as needed */
-            height: 400px;
+            flex-basis: 45%; /* Increased size */
+            max-width: 600px;
+            height: auto;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -39,12 +40,31 @@
         .logo img {
             max-width: 100%;
             max-height: 100%;
-            border-radius: 10px; /* Optional: for rounded corners */
+            border-radius: 10px;
+        }
+        .agent-settings {
+            flex-basis: 10%; /* Decreased size */
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 10px;
+        }
+        .agent-settings label, .agent-settings input, .agent-settings .btn-container {
+            width: 100%; /* Full width */
+        }
+        .agent-settings label, .agent-settings input {
+            margin-bottom: 5px;
+        }
+        .agent-settings .btn-container {
+            display: flex;
+            justify-content: flex-start;
+        }
+        .agent-settings .btn-custom {
+            margin-right: 5px;
         }
         #chart-container {
-            flex-grow: 1;
+            flex-basis: 45%; /* Adjusted size */
             max-width: 600px;
-            padding-left: 20px; /* Spacing between logo and chart */
         }
         .panel {
             background-color: #fff;
@@ -54,22 +74,72 @@
             text-align: center;
         }
         #game-container {
-            margin-top: 20px; /* Spacing above the game container */
+            margin-top: 5px;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+
     <script src="game.js"></script>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h3>Earl Grey, HOT!</h3>
-            <h5>"Captain Picard has been infected with a spaceborne pathogen causing him to become unhinged in his search for tea. How long will it take him to find his precious cup of earl grey?"</h5>
-        </div>
-        <div class="logo-chart-row">
+        <div class="top-row">
             <div class="logo">
-                <img src="assets/logo.png" alt="Logo"> <!-- Logo Image Reference -->
+                <img src="assets/logo.png" alt="Logo">
+            </div>
+            <div class="container">
+                <div class="agent-settings">
+                    <label for="learningRate">Learning Rate:</label>
+                    <small class="form-text text-muted">Min: 0, Max: 1</small>
+                    <input type="number" id="learningRate" value="0.1" min="0" max="1" step="0.01">
+                
+                    <label for="discountFactor">Discount Factor:</label>
+                    <small class="form-text text-muted">Min: 0, Max: 1</small>
+                    <input type="number" id="discountFactor" value="0.9" min="0" max="1" step="0.01">
+                
+                    <label for="explorationRate">Exploration Rate:</label>
+                    <small class="form-text text-muted">Min: 0, Max: 1</small>
+                    <input type="number" id="explorationRate" value="1.0" min="0" max="1" step="0.01">
+                
+                    <label for="explorationDecay">Exploration Decay:</label>
+                    <small class="form-text text-muted">Min: 0</small>
+                    <input type="number" id="explorationDecay" value="0.001" min="0" step="0.001">
+                
+                    <div class="btn-container">
+                        <button class="btn btn-success btn-custom" onclick="start();"><i class="fas fa-play"></i> Start</button>
+                        <button class="btn btn-info" data-toggle="modal" data-target="#infoModal"><i class="fas fa-info"></i> Info</button>
+                    </div>
+                </div>
+                
+            </div>
+            <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="infoModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="infoModalLabel">Game Information</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Captain Picard has been infected with a spaceborne pathogen causing him to become unhinged in his search for tea. This game is a visual representation of the Q-learning algorithm, where Captain Picard learns to navigate towards his precious cup of earl grey.</p>
+                            <p>You can adjust various parameters of the Q-learning algorithm to see how it affects the learning process:</p>
+                            <ul>
+                                <li><b>Learning Rate</b> - The rate at which the agent learns from its experiences. A higher learning rate means the agent will learn faster, but it may also be more prone to overfitting.</li>
+                                <li><b>Discount Factor</b> - The discount factor determines how much the agent values future rewards. A higher discount factor means the agent will value future rewards more, and vice versa.</li>
+                                <li><b>Exploration Rate</b> - The exploration rate determines how often the agent will explore new actions. A higher exploration rate means the agent will explore more often, and vice versa.</li>
+                                <li><b>Exploration Decay</b> - The exploration decay determines how quickly the exploration rate will decrease over time. A higher exploration decay means the exploration rate will decrease faster, and vice versa.</li>
+                            </ul>
+                            <p>The game is won when the agent is able to gain the maximum reward 5 consecutive times (meaning it has found the optimal path)</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="panel" id="chart-container">
                 <canvas id="rewardChart"></canvas>
@@ -79,5 +149,41 @@
             <!-- Game content goes here -->
         </div>
     </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Validation function
+        function validateInputs() {
+            var isValid = true;
+            // List of all input IDs
+            var inputIds = ['learningRate', 'discountFactor', 'explorationRate', 'explorationDecay'];
+    
+            inputIds.forEach(function(id) {
+                var input = document.getElementById(id);
+                if (!input.checkValidity()) {
+                    isValid = false;
+                }
+            });
+    
+            // Enable or disable the start button based on validity
+            document.querySelector('.btn-success').disabled = !isValid;
+        }
+    
+        // Event listener for input changes
+        document.addEventListener('DOMContentLoaded', function() {
+            var inputIds = ['learningRate', 'discountFactor', 'explorationRate', 'explorationDecay'];
+            inputIds.forEach(function(id) {
+                var input = document.getElementById(id);
+                input.addEventListener('input', validateInputs);
+            });
+            validateInputs(); // Initial validation check
+        });
+    
+        // Updated startGame function
+        function start() {
+            startGame();
+        }
+    </script>
 </body>
 </html>

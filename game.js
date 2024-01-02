@@ -1,3 +1,10 @@
+var agentSettings = {
+    learningRate: 0.1,
+    discountFactor: 0.9,
+    explorationRate: 1.0,
+    explorationDecay: 0.001
+};
+
 var config = {
     type: Phaser.AUTO,
     width: 800,
@@ -32,11 +39,12 @@ var attempt = 1;
 var attemptText;
 var rewardText;
 var totalReward = 0;
-var stepDelay = 50; // Delay in milliseconds between each step
+var stepDelay = 10; // Delay in milliseconds between each step
 var lastStepTime = 0;
 var lastAction = null; // Track the last action taken
 var epsilonMin = 0.01; // Minimum value for epsilon
 var epsilonDecay = 0.995; // Decay rate for epsilon
+var obstacles; 
 
 // Add a penalty for revisiting the same state
 var penaltyForRevisiting = -0.95;
@@ -45,11 +53,42 @@ var samePositionCount = 0;
 var rewardHistory = []; // Array to track the reward history
 var rewardChart; // Chart.js chart instance
 
-var game = new Phaser.Game(config);
+// couple of extra bits for tracking when our model seems to maximise its reward (game won)
+var consecutiveMaxRewardCount = 0;
+var maxPossibleReward = 0.86;
+var lastReward = 0;
+
+
+
+function startGame() {
+    // Fetch settings from HTML inputs
+    agentSettings.learningRate = parseFloat(document.getElementById('learningRate').value);
+    agentSettings.discountFactor = parseFloat(document.getElementById('discountFactor').value);
+    agentSettings.explorationRate = parseFloat(document.getElementById('explorationRate').value);
+    agentSettings.explorationDecay = parseFloat(document.getElementById('explorationDecay').value);
+
+    // Initialize the Phaser game
+    game = new Phaser.Game(config);
+}
+
+function showWinMessage(totalAttempts) {
+    // Display a winning message
+    alert(`Congratulations! The game has been won in ${totalAttempts} attempts.`);
+
+    // Offer to reset the game
+    if (confirm("Would you like to reset the game?")) {
+        resetGame();
+    }
+}
+
+function resetGame() {
+    location.reload();
+}
 
 function preload() {
     this.load.image('agent', 'assets/agent.png');
     this.load.image('goal', 'assets/goal.png');
+    this.load.image('obstacle', 'assets/obstacle.png');
 }
 
 function create() {
@@ -59,6 +98,8 @@ function create() {
     goal = this.add.sprite(goalPosition.x * tileSize, goalPosition.y * tileSize, 'goal').setOrigin(0);
     attemptText = this.add.text(16, 16, 'Attempt: 1', { fontSize: '32px', fill: '#FFF' });
     rewardText = this.add.text(16, 48, 'Reward: 0', { fontSize: '32px', fill: '#FFF' });
+    createObstacles(this);
+    params = this.add.text(16, 80, 'Learning Rate: ' + agentSettings.learningRate + '\nDiscount Factor: ' + agentSettings.discountFactor + '\nExploration Rate: ' + agentSettings.explorationRate + '\nExploration Decay: ' + agentSettings.explorationDecay, { fontSize: '16px', fill: '#FFF' });
     var ctx = document.getElementById('rewardChart').getContext('2d');
     rewardChart = new Chart(ctx, {
         type: 'line',
@@ -80,6 +121,24 @@ function create() {
             }
         }
     });
+}
+
+function createObstacles(scene) {
+    obstacles = [];
+    for (let i = 0; i < 4; i++) {
+        let obstacleX = Phaser.Math.Between(0, gridSize - 1);
+        let obstacleY = Phaser.Math.Between(0, gridSize - 1);
+
+        // Ensure obstacle is not placed on the agent or the goal
+        while ((obstacleX === agentPosition.x && obstacleY === agentPosition.y) ||
+               (obstacleX === goalPosition.x && obstacleY === goalPosition.y)) {
+            obstacleX = Phaser.Math.Between(0, gridSize - 1);
+            obstacleY = Phaser.Math.Between(0, gridSize - 1);
+        }
+
+        const obstacle = scene.add.sprite(obstacleX * tileSize, obstacleY * tileSize, 'obstacle').setOrigin(0);
+        obstacles.push(obstacle);
+    }
 }
 
 // Function to update the last few actions taken
@@ -116,6 +175,14 @@ function update(time) {
 
         if (agentPosition.x === goalPosition.x && agentPosition.y === goalPosition.y) {
             console.log('Goal reached! Attempt:', attempt, 'Total Reward:', totalReward);
+            
+            if (attempt > 1 && totalReward >= maxPossibleReward && lastReward >= maxPossibleReward) {
+                consecutiveMaxRewardCount++;
+            }
+            else {
+                consecutiveMaxRewardCount = 0;
+            }
+
             rewardText.setText('Reward: ' + totalReward.toFixed(2));
 
             // Decay the exploration rate
@@ -129,6 +196,13 @@ function update(time) {
                 dataset.data.push(totalReward);
             });
             rewardChart.update();
+
+            // Check if the game has been won
+            if (consecutiveMaxRewardCount === 5) {
+                showWinMessage(attempt);
+            }
+
+            lastReward = totalReward; // Track the last reward
             resetAgent(); // Reset agent position after reaching the goal
             totalReward = 0;
             attempt++;
@@ -169,29 +243,44 @@ function chooseAction(position) {
 // move around looking for our earl grey
 function takeAction(position, action) {
     var reward = -0.01;
-    if (lastPosition && position.x === lastPosition.x && position.y === lastPosition.y) {
-        reward += penaltyForRevisiting;
+    var newPosition = { x: position.x, y: position.y };
+
+    // Check if the new position is valid (not an obstacle and within grid bounds)
+    function isValidMove(newX, newY) {
+        if (newX < 0 || newY < 0 || newX >= gridSize || newY >= gridSize) {
+            return false; // Out of grid bounds
+        }
+        return !obstacles.some(obstacle => obstacle.x / tileSize === newX && obstacle.y / tileSize === newY);
     }
 
-    var newPosition = { x: position.x, y: position.y };
+    // Determine new position based on the action
     switch (action) {
         case 0: // Up
-            if (position.y > 0) newPosition.y -= 1;
+            if (isValidMove(position.x, position.y - 1)) newPosition.y -= 1;
             break;
         case 1: // Right
-            if (position.x < gridSize - 1) newPosition.x += 1;
+            if (isValidMove(position.x + 1, position.y)) newPosition.x += 1;
             break;
         case 2: // Down
-            if (position.y < gridSize - 1) newPosition.y += 1;
+            if (isValidMove(position.x, position.y + 1)) newPosition.y += 1;
             break;
         case 3: // Left
-            if (position.x > 0) newPosition.x -= 1;
+            if (isValidMove(position.x - 1, position.y)) newPosition.x -= 1;
             break;
     }
-    if (newPosition.x === goalPosition.x && newPosition.y === goalPosition.y) {
-        reward = 1; // Reward for reaching the goal
+
+    if (newPosition.x !== position.x || newPosition.y !== position.y) {
+        // Update agent position if it's a valid move
+        agentPosition = newPosition;
+
+        if (agentPosition.x === goalPosition.x && agentPosition.y === goalPosition.y) {
+            reward = 1; // Reward for reaching the goal
+        }
+    } else {
+        // Invalid move (either out of bounds or into an obstacle)
+        reward -= 0.1;
     }
-    agentPosition = newPosition;
+
     return reward;
 }
 
