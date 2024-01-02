@@ -39,7 +39,7 @@ var attempt = 1;
 var attemptText;
 var rewardText;
 var totalReward = 0;
-var stepDelay = 10; // Delay in milliseconds between each step
+var stepDelay = 30; // Delay in milliseconds between each step
 var lastStepTime = 0;
 var lastAction = null; // Track the last action taken
 var epsilonMin = 0.01; // Minimum value for epsilon
@@ -125,20 +125,18 @@ function create() {
 
 function createObstacles(scene) {
     obstacles = [];
-    for (let i = 0; i < 4; i++) {
-        let obstacleX = Phaser.Math.Between(0, gridSize - 1);
-        let obstacleY = Phaser.Math.Between(0, gridSize - 1);
+    // Define fixed positions for the obstacles
+    const fixedPositions = [
+        { x: 5, y: 2 }, 
+        { x: 5, y: 6 }, 
+        { x: 2, y: 5 }, 
+        { x: 1, y: 5 }  
+    ];
 
-        // Ensure obstacle is not placed on the agent or the goal
-        while ((obstacleX === agentPosition.x && obstacleY === agentPosition.y) ||
-               (obstacleX === goalPosition.x && obstacleY === goalPosition.y)) {
-            obstacleX = Phaser.Math.Between(0, gridSize - 1);
-            obstacleY = Phaser.Math.Between(0, gridSize - 1);
-        }
-
-        const obstacle = scene.add.sprite(obstacleX * tileSize, obstacleY * tileSize, 'obstacle').setOrigin(0);
+    fixedPositions.forEach(pos => {
+        const obstacle = scene.add.sprite(pos.x * tileSize, pos.y * tileSize, 'obstacle').setOrigin(0);
         obstacles.push(obstacle);
-    }
+    });
 }
 
 // Function to update the last few actions taken
