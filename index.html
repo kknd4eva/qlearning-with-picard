@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-Learning Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            overflow: auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+        }
+        .logo-chart-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .logo {
+            flex-basis: 400px; /* Adjust size as needed */
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+        }
+        .logo img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px; /* Optional: for rounded corners */
+        }
+        #chart-container {
+            flex-grow: 1;
+            max-width: 600px;
+            padding-left: 20px; /* Spacing between logo and chart */
+        }
+        .panel {
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            text-align: center;
+        }
+        #game-container {
+            margin-top: 20px; /* Spacing above the game container */
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="game.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h3>Earl Grey, HOT!</h3>
+            <h5>"Captain Picard has been infected with a spaceborne pathogen causing him to become unhinged in his search for tea. How long will it take him to find his precious cup of earl grey?"</h5>
+        </div>
+        <div class="logo-chart-row">
+            <div class="logo">
+                <img src="assets/logo.png" alt="Logo"> <!-- Logo Image Reference -->
+            </div>
+            <div class="panel" id="chart-container">
+                <canvas id="rewardChart"></canvas>
+            </div>
+        </div>
+        <div class="panel" id="game-container">
+            <!-- Game content goes here -->
+        </div>
+    </div>
+</body>
+</html>
