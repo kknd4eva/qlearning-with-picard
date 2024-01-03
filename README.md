@@ -5,7 +5,11 @@ The idea is that Captain Picard has gone quite mad in his lust for earl grey tea
 You can see his progress on-screen, and observe the rewards he gets for each action he takes. Over time, he will learn to take the best actions to get to the tea as fast as possible.
 
 ### Installation Locally
-To install, simply clone the repository and open the index.html file in your browser. 
+To install, simply clone the repository and open the index.html file in your browser, or you can run the node server by executing 
+```
+PS C:\Users\JMatson\source\repos\qlearning> node server.js
+Server running at http://localhost:3000/
+```
 
 
 
